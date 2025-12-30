@@ -1,11 +1,12 @@
 'use client';
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import AIModal from "./components/AIModal";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -97,57 +98,109 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
             {[
-              { id: 1, name: 'Akçapınar Lofts', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=900&fit=crop&q=80', alt: 'Akçapınar Lofts', hasVideo: false, inProgress: true },
-              { id: 2, name: 'Şirinköy KC evi', url: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&h=900&fit=crop&q=80', alt: 'Şirinköy KC evi', hasVideo: false, inProgress: true },
-              { id: 3, name: 'Akyaka Panorama', url: 'https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=1200&h=900&fit=crop&q=80', alt: 'Akyaka Panorama', hasVideo: true, inProgress: false },
+              {
+                id: 1,
+                name: "Akçapınar Lofts",
+                url:
+                  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=900&fit=crop&q=80",
+                alt: "Akçapınar Lofts",
+                hasVideo: false,
+                inProgress: true,
+                isGradient: false,
+              },
+              {
+                id: 2,
+                name: "Akyaka Villa Marine",
+                // Ana görsel: boşluk ve parantez içeren dosya adı
+                url: "/akyaka-villa-marine1 (1).webp",
+                alt: "Akyaka Villa Marine",
+                hasVideo: false,
+                inProgress: false,
+                isGradient: false,
+              },
+              {
+                id: 3,
+                name: "Akyaka Panorama",
+                url:
+                  "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=1200&h=900&fit=crop&q=80",
+                alt: "Akyaka Panorama",
+                hasVideo: true,
+                inProgress: false,
+                isGradient: false,
+              },
             ].map((project) => (
-              <div
+              <a
                 key={project.id}
-                className="relative aspect-[4/3] overflow-hidden group cursor-pointer"
+                href="https://www.instagram.com/bc_architect/"
+            target="_blank"
+            rel="noopener noreferrer"
+                className="relative aspect-[4/3] overflow-hidden group cursor-pointer block"
               >
                 {/* Default Image (only for non-video projects) */}
                 {!project.hasVideo && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A1A]/5 to-[#1A1A1A]/10">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#141414] to-[#2b2b2b]">
                     <Image
                       src={project.url}
                       alt={project.alt}
                       fill
-                      className="object-cover transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
+                      className={`object-cover transition-all duration-700 ease-out ${
+                        project.name === "Akyaka Villa Marine"
+                          ? "group-hover:scale-105 group-hover:brightness-110"
+                          : "group-hover:scale-110 group-hover:brightness-110"
+                      }`}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
                 )}
-                
+
                 {/* Video (only for Akyaka Panorama) */}
                 {project.hasVideo && (
-                  <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                  >
-                    <source src="/akyaka-panorama.mp4" type="video/mp4" />
-                  </video>
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#141414] to-[#2b2b2b] overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      onMouseEnter={() => {
+                        if (videoRef.current) {
+                          videoRef.current.play().catch(() => {});
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (videoRef.current) {
+                          videoRef.current.pause();
+                          videoRef.current.currentTime = 0;
+                        }
+                      }}
+                    >
+                      <source src="/akyaka-panorama.mp4" type="video/mp4" />
+                    </video>
+                    {/* Hafif gri overlay - siyah ekran görünmesini önler */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A1A]/20 via-transparent to-[#2b2b2b]/30 pointer-events-none z-10" />
+                  </div>
                 )}
-                
-                {/* Construction in Progress Badge */}
+
+                {/* Construction Status Badge */}
                 {project.inProgress && (
                   <div className="absolute top-4 right-4 z-10">
-                    <span className="px-3 py-1.5 bg-[#1A1A1A]/90 backdrop-blur-sm text-[#FDFDFB] text-xs md:text-sm font-light tracking-wider uppercase border border-[#FDFDFB]/20">
-                      Construction in Progress
+                    <span className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 bg-[#0B0B0B]/85 backdrop-blur-md text-[#FDFDFB] text-[10px] md:text-xs font-light tracking-[0.16em] uppercase border border-[#FDFDFB]/25 shadow-lg">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#F5C26B]" />
+                      YAPIM AŞAMASINDA
                     </span>
                   </div>
                 )}
-                
+
                 <div className="absolute inset-0 bg-[#1A1A1A]/0 group-hover:bg-[#1A1A1A]/5 transition-all duration-500 group-hover:shadow-2xl" />
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-[#1A1A1A]/40 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                  <h3 className="font-serif text-2xl md:text-3xl font-light text-[#FDFDFB] opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 z-20">
+                  <h3 className="font-serif text-2xl md:text-3xl font-light text-[#FDFDFB] opacity-90 group-hover:opacity-100 transition-opacity duration-500">
                     {project.name}
                   </h3>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -326,8 +379,8 @@ export default function Home() {
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
               <a
                 href="https://instagram.com/bc_architect"
-                target="_blank"
-                rel="noopener noreferrer"
+            target="_blank"
+            rel="noopener noreferrer"
                 className="flex items-center gap-2 text-[#1A1A1A]/50 hover:text-[#1A1A1A] transition-colors"
                 aria-label="Instagram'da takip et"
               >
@@ -340,8 +393,8 @@ export default function Home() {
                 </svg>
                 <span className="text-xs md:text-sm font-light tracking-wide">Instagram</span>
               </a>
-              <p className="text-xs md:text-sm font-light text-[#1A1A1A]/50 tracking-wide">
-                Powered by AI | Concept & Design by [Senin Adın]
+              <p className="text-[10px] md:text-xs font-light text-[#1A1A1A]/50 tracking-wide">
+                Concept & Design by Porcius
               </p>
             </div>
           </div>
