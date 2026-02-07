@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Mimarlık Ofisi - Akçapınar & Akyaka",
-  description: "Doğa ile mimariyi AI ile buluşturuyoruz",
+  description: "Doğa ile mimariyi tasarımla buluşturuyoruz",
 };
 
 export default function RootLayout({

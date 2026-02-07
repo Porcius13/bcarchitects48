@@ -1,0 +1,40 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "name": "Akçapınar Lofts",
+      "url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&h=900&fit=crop&q=80",
+      "alt": "Akçapınar Lofts",
+      "hasVideo": false,
+      "inProgress": true
+    },
+    {
+      "id": 2,
+      "name": "Akyaka Villa Marine",
+      "url": "/akyaka-villa-marine1 (1).webp",
+      "alt": "Akyaka Villa Marine",
+      "hasVideo": false,
+      "inProgress": false
+    },
+    {
+      "id": 3,
+      "name": "Akyaka Panorama",
+      "url": "/akyaka-panorama.mp4",
+      "alt": "Akyaka Panorama",
+      "hasVideo": true,
+      "inProgress": false
+    }
+  ],
+  "contact": {
+    "addressLines": [
+      "Akçapınar Küme Evleri 67/2 ",
+      "Ula, Muğla"
+    ],
+    "phoneText": "+90 541 354 7596",
+    "emailText": "info@bcmimarlik48.com"
+  },
+  "links": {
+    "whatsappUrl": "https://wa.me/905413547596",
+    "instagramUrl": "https://instagram.com/bc_architect"
+  }
+}

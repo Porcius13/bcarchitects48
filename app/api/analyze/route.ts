@@ -1,29 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Mock API - 2 saniye bekleyip rastgele bir analiz döndürür
-const getMockAnalyses = (emotion: string, material: string, nature: string) => [
-  `Tercihleriniz, özellikle "${material}" materyalinin ve "${emotion}" duygusunun, Akçapınar'ın doğal peyzajıyla olağanüstü bir uyum içinde olduğunu gösteriyor. Bu bölgenin denizle buluşan orman dokusu, sizin tercih ettiğiniz yaklaşımı destekleyen bir zemin sunuyor. Önerdiğimiz mimari stil, minimalizmin zarafetini doğanın organik formlarıyla birleştiren, çağdaş bir yaklaşım. Yapı, çevresindeki doğal unsurlarla diyalog kuran, ancak kendi kimliğini koruyan bir karaktere sahip olmalı.
+const SYSTEM_PROMPT = `Sen Akçapınar, Ula ve Akyaka bölgesinde uzmanlaşmış profesyonel bir mimarlık danışmanısın. Müşteri tercihlerine göre mimari stil önerisi üretiyorsun. Yanıtların Türkçe, profesyonel, kısa ve öz olsun. Gereksiz tekrarlara ve uzun açıklamalara girme.`;
 
-${material} kullanımı, özellikle Akçapınar'ın iklim koşulları ve doğal çevresi göz önüne alındığında, hem estetik hem de fonksiyonel açıdan ideal bir seçim. Bu materyal, zaman içinde doğayla bütünleşerek kendine özgü bir patina kazanacak ve yapıya derinlik katacaktır. İç mekanlarda ise, doğal ışığın kontrollü kullanımı ve açık-kapalı mekan geçişleri, "${nature}" ifadesinin mimariye yansımasını sağlayacaktır.
+const getFallbackAnalysis = (
+  emotion: string,
+  material: string,
+  nature: string
+) =>
+  `Tercihleriniz, "${material}" ve "${emotion}" ile Akçapınar'ın doğal peyzajı uyumlu. ${material} kullanımı hem estetik hem fonksiyonel açıdan ideal. Akçapınar'ın "${nature}" özelliklerini mimariye taşıyarak, doğayla uyumlu minimal bir stil oluşturabilirsiniz.`;
 
-Lüks ve minimalizm arasındaki denge, gereksiz süslemelerden kaçınırken, her detayın özenle tasarlanmasıyla kurulmalı. Bu yaklaşım, Akçapınar'ın sakin ve huzurlu atmosferiyle mükemmel bir uyum içinde olacak, eviniz hem bir sığınak hem de doğayla iç içe yaşamın bir parçası haline gelecektir.`,
+async function callGeminiRest(
+  apiKey: string,
+  prompt: string,
+  model: string
+): Promise<{ text: string | null; error?: string }> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.8,
+          maxOutputTokens: 4096,
+          topP: 0.95,
+          topK: 40,
+        },
+      }),
+    }
+  );
 
-  `Akçapınar'ın eşsiz doğası, özellikle "${nature}" ifadesinin altını çizdiği özellikler, sizin mimari vizyonunuzla buluştuğunda ortaya çıkacak sonuç gerçekten özel olacak. "${emotion}" duygusunu yansıtacak bir yapı, bu bölgenin deniz kenarındaki konumu ve orman dokusuyla harmanlandığında, çağdaş lüks mimarinin en zarif örneklerinden birini oluşturabilir.
+  if (!res.ok) {
+    const err = await res.text();
+    const msg = `[${model}] ${res.status}: ${err.slice(0, 200)}`;
+    console.error('Gemini REST error:', msg);
+    return { text: null, error: msg };
+  }
 
-${material} seçiminiz, bu bölgede hem dayanıklılık hem de estetik açıdan son derece uygun. Materyalin doğal dokusu, Akçapınar'ın çevresel karakteriyle uyumlu bir dil oluşturacak. Yapının tasarımında, iç ve dış mekan arasındaki sınırların bulanıklaştırılması, doğanın içeriye taşınması ve "${emotion}" duygusunun her alanda hissedilmesi ön planda tutulmalı.
-
-Minimalist yaklaşım, burada sadeleştirme değil, özü yakalama anlamına geliyor. Her mekan, işlevselliği ve estetiği bir arada sunmalı, lüks ise detaylarda ve malzeme seçimlerinde kendini göstermeli. Bu şekilde, Akçapınar'ın doğal güzellikleriyle rekabet etmek yerine, onlarla uyum içinde var olan bir mimari ortaya çıkacaktır.`,
-
-  `Tercihleriniz, Akçapınar'ın doğal çevresiyle kurulacak mimari diyalog için mükemmel bir başlangıç noktası sunuyor. "${emotion}" duygusunun mimariye yansıması, özellikle bu bölgenin sakin atmosferiyle birleştiğinde, benzersiz bir yaşam deneyimi yaratacaktır. ${material} kullanımı, hem sürdürülebilirlik hem de estetik değerler açısından bu projeyi güçlendirecek bir tercih.
-
-Akçapınar'ın "${nature}" özelliklerini mimariye entegre etmek, yapının çevreyle kurduğu ilişkiyi derinleştirecek. Büyük cam yüzeyler, teraslar ve bahçe alanları, doğal peyzajla sürekli bir görsel bağlantı sağlayacak. İç mekanlarda ise, doğal malzemelerin kullanımı ve minimal dekorasyon anlayışı, huzurlu bir atmosfer yaratacaktır.
-
-Lüks, burada gösterişten ziyade, yaşam kalitesi ve mekansal deneyimle tanımlanmalı. Her detay, "${emotion}" duygusunu destekleyecek şekilde düşünülmeli, ancak doğanın önüne geçmemeli. Bu denge, Akçapınar'ın ruhunu yansıtan, çağdaş ve zarif bir mimari dil oluşturacaktır.`
-];
+  const data = (await res.json()) as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const text = parts
+    .map((p) => p.text || '')
+    .join('')
+    .trim();
+  return { text: text || null };
+}
 
 export async function POST(request: NextRequest) {
+  let emotion = '';
+  let material = '';
+  let nature = '';
+
   try {
-    const { emotion, material, nature } = await request.json();
+    const body = await request.json();
+    emotion = body.emotion || '';
+    material = body.material || '';
+    nature = body.nature || '';
 
     if (!emotion || !material || !nature) {
       return NextResponse.json(
@@ -32,17 +67,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2 saniye bekle (gerçek API çağrısı simülasyonu)
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'GEMINI_API_KEY ortam değişkeni tanımlı değil' },
+        { status: 500 }
+      );
+    }
 
-    // Rastgele bir analiz seç
-    const mockAnalyses = getMockAnalyses(emotion, material, nature);
-    const randomIndex = Math.floor(Math.random() * mockAnalyses.length);
-    const analysis = mockAnalyses[randomIndex];
+    const userPrompt = `Müşteri tercihleri:
+- Evin hangi duyguyu yansıtmalı: ${emotion}
+- Tercih edilen ana materyal: ${material}
+- Akçapınar'ın doğasında etkileyen özellikler: ${nature}
 
-    return NextResponse.json({ analysis });
+Bu tercihlere göre kısa ve öz bir mimari stil önerisi yaz.`;
+
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n${userPrompt}`;
+    // API anahtarınızla erişilebilen modeller (ListModels'tan alındı)
+    const modelsToTry = [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-pro-latest',
+      'gemini-flash-latest',
+    ];
+
+    let analysis = '';
+    let lastError = '';
+    for (const modelId of modelsToTry) {
+      const { text, error } = await callGeminiRest(apiKey, fullPrompt, modelId);
+      if (error) lastError = error;
+      if (text && text.length > 50) {
+        analysis = text;
+        break;
+      }
+    }
+
+    if (!analysis) {
+      throw new Error(lastError || 'Gemini yanıt üretemedi');
+    }
+
+    return NextResponse.json({ analysis, source: 'gemini' });
   } catch (error) {
-    console.error('Mock API Error:', error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('Gemini API Error:', errMsg);
+    // Gemini başarısız olursa fallback ile devam et (emotion, material, nature zaten parse edildi)
+    if (emotion && material && nature) {
+      const analysis = getFallbackAnalysis(emotion, material, nature);
+      return NextResponse.json({
+        analysis,
+        source: 'fallback',
+        debugError: errMsg,
+      });
+    }
     return NextResponse.json(
       {
         error:
@@ -54,4 +130,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

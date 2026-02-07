@@ -37,12 +37,16 @@ export default function AIModal({ isOpen, onClose }: AIModalProps) {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Analiz başarısız oldu');
+        throw new Error(data?.error || 'Analiz başarısız oldu');
       }
 
-      const data = await response.json();
       setResult(data.analysis);
+      if (data.source === 'fallback' && data.debugError) {
+        console.warn('[Randevu] Gemini kullanılamadı:', data.debugError);
+      }
     } catch (error) {
       console.error('Error:', error);
       setResult('Üzgünüz, bir hata oluştu. Lütfen tekrar deneyin.');
@@ -63,11 +67,16 @@ export default function AIModal({ isOpen, onClose }: AIModalProps) {
     e.preventDefault();
     setIsSubmittingAppointment(true);
 
-    // Simüle edilmiş form gönderimi - konsola yazdır
-    console.log('Randevu Formu Gönderildi:', {
+    // Randevu: müşteri cevapları + iletişim bilgileri
+    console.log('Randevu Oluşturuldu:', {
       name: appointmentData.name,
       phone: appointmentData.phone,
-      analysis: result,
+      tercihler: {
+        duygu: formData.emotion,
+        materyal: formData.material,
+        doga: formData.nature,
+      },
+      mimariOneri: result,
     });
 
     // 1 saniye bekle (gerçek API çağrısı simülasyonu)
@@ -85,7 +94,7 @@ export default function AIModal({ isOpen, onClose }: AIModalProps) {
         {/* Header */}
         <div className="sticky top-0 bg-[#FDFDFB] border-b border-[#1A1A1A]/10 px-6 md:px-8 py-6 flex justify-between items-center">
           <h2 className="font-serif text-2xl md:text-3xl font-light tracking-tight">
-            {result ? 'Berfin Çelik Mimarlık Ofisi Önerisi' : 'AI Stil Analizi'}
+            {result ? 'Berfin Çelik Mimarlık Ofisi Önerisi' : 'Randevu Oluştur'}
           </h2>
           <button
             onClick={() => {
@@ -119,7 +128,7 @@ export default function AIModal({ isOpen, onClose }: AIModalProps) {
                   />
                 </svg>
                 <p className="text-[#1A1A1A]/80 leading-relaxed font-light text-base md:text-lg">
-                  Analiziniz ve bilgileriniz mimarımıza iletildi. En kısa sürede sizinle iletişime geçeceğiz.
+                  Randevu talebiniz ve tercihleriniz mimarımıza iletildi. En kısa sürede sizinle iletişime geçeceğiz.
                 </p>
               </div>
               <button
@@ -212,13 +221,13 @@ export default function AIModal({ isOpen, onClose }: AIModalProps) {
                   onClick={() => setShowAppointmentForm(true)}
                   className="px-6 py-3 bg-[#1A1A1A] text-[#FDFDFB] font-light text-sm tracking-wide uppercase transition-all duration-300 hover:bg-[#1A1A1A]/90 flex-1"
                 >
-                  Bu Analizi Mimarımıza Gönder ve Randevu Al
+                  Randevu Bilgilerini Gir
                 </button>
                 <button
                   onClick={handleReset}
                   className="px-6 py-3 border border-[#1A1A1A]/20 text-[#1A1A1A] font-light text-sm tracking-wide uppercase transition-all duration-300 hover:border-[#1A1A1A] hover:bg-[#1A1A1A]/5"
                 >
-                  Yeni Analiz
+                  Yeni Randevu
                 </button>
               </div>
             </div>
@@ -294,10 +303,10 @@ export default function AIModal({ isOpen, onClose }: AIModalProps) {
                   {isLoading ? (
                     <>
                       <span className="inline-block w-4 h-4 border-2 border-[#FDFDFB] border-t-transparent rounded-full animate-spin"></span>
-                      <span>Analiz ediliyor...</span>
+                      <span>İşleniyor...</span>
                     </>
                   ) : (
-                    'Analiz Et'
+                    'Devam Et'
                   )}
                 </button>
                 <button
